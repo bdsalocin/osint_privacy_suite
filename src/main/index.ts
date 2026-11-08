@@ -139,8 +139,8 @@ function createWindow(): void {
     title: 'OSINT & Privacy Suite',
     width: 1280,
     height: 850,
-    minWidth: 1100,
-    minHeight: 750,
+    minWidth: 520,
+    minHeight: 480,
     show: !isHeadlessTest,
     backgroundColor: '#090d16',
     webPreferences: {
