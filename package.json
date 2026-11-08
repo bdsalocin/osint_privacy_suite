@@ -1,0 +1,32 @@
+{
+  "name": "osint-privacy-suite",
+  "version": "1.0.0",
+  "description": "macOS Desktop Application for OSINT Analysis and Privacy Auditing",
+  "type": "module",
+  "main": "dist/src/main/index.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.js",
+    "build:dmg": "npm run build && node scripts/build-dmg.js",
+    "start": "electron .",
+    "test:headless": "electron . --test-headless",
+    "test": "vitest run tests/unit",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "node tests/e2e/runner.js",
+    "test:watch": "vitest tests/unit",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "osint",
+    "privacy",
+    "gdpr",
+    "justdeleteme",
+    "electron"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "electron": "^45.2.3",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
