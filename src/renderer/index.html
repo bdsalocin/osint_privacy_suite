@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;">
+  <title>OSINT & Privacy Suite</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    <!-- Barre de navigation latérale -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div class="brand-text">
+          <span class="brand-title">OSINT Suite</span>
+          <span class="brand-subtitle">Protection et Vie Privée</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button id="nav-view1" class="nav-item active" type="button">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-label">Accueil et lancement</span>
+        </button>
+        <button id="nav-view2" class="nav-item" type="button">
+          <span class="nav-icon">🧹</span>
+          <span class="nav-label">Audit et nettoyage</span>
+        </button>
+        <button id="nav-view3" class="nav-item" type="button">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Exploration OSINT</span>
+        </button>
+        <button id="nav-view4" class="nav-item" type="button">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Dossiers et paramètres</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status">
+          <span class="status-indicator online"></span>
+          <span class="status-text">Base SQLite locale active</span>
+        </div>
+        <div class="privacy-badge">100% Hors ligne et confidentiel</div>
+      </div>
+    </aside>
+
+    <!-- Conteneur principal des 4 vues -->
+    <main class="main-content">
+
+      <!-- ================= VUE 1 : ACCUEIL ET LANCEMENT ================= -->
+      <section id="view1" class="view-panel active">
+        <header class="view-header">
+          <div>
+            <h1 class="view-title">Audit de présence numérique et assainissement</h1>
+            <p class="view-description">Renseignez vos identifiants pour exécuter en parallèle les 6 outils OSINT et cartographier vos comptes.</p>
+          </div>
+        </header>
+
+        <!-- Formulaire multi cibles -->
+        <div class="card form-card">
+          <h2 class="card-title">Cibles d'analyse simultanées</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="input-email" class="form-label">Adresse électronique</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="input-email" class="form-input" placeholder="jean.dupont@exemple.fr">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-username" class="form-label">Pseudonyme</label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="input-username" class="form-input" placeholder="jdupont">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-phone" class="form-label">Numéro de téléphone</label>
+              <div class="phone-input-wrapper">
+                <select id="select-phone-prefix" class="form-select prefix-select">
+                  <option value="+33" selected>+33 (France)</option>
+                  <option value="+32">+32 (Belgique)</option>
+                  <option value="+41">+41 (Suisse)</option>
+                  <option value="+1">+1 (Canada, USA)</option>
+                  <option value="+44">+44 (Royaume Uni)</option>
+                </select>
+                <input type="tel" id="input-phone" class="form-input" placeholder="06 12 34 56 78">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sélecteur d'outils -->
+          <div class="tools-selector-section">
+            <div class="section-header-flex">
+              <h3 class="subsection-title">Outils mobilisés</h3>
+              <div class="selector-actions">
+                <button type="button" id="btn-select-all-tools" class="btn-link">Tout cocher</button>
+                <button type="button" id="btn-deselect-all-tools" class="btn-link">Tout décocher</button>
+              </div>
+            </div>
+
+            <div class="tools-grid">
+              <label class="tool-checkbox-card" for="tool-holehe">
+                <input type="checkbox" id="tool-holehe" value="holehe" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">Holehe</span>
+                    <span class="badge badge-blue">Email</span>
+                  </div>
+                  <p class="tool-desc">Recherche d'existence d'email sur plus de 120 services web.</p>
+                </div>
+              </label>
+
+              <label class="tool-checkbox-card" for="tool-maigret">
+                <input type="checkbox" id="tool-maigret" value="maigret" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">Maigret</span>
+                    <span class="badge badge-indigo">Pseudo</span>
+                  </div>
+                  <p class="tool-desc">Traçage de pseudonyme sur plus de 3 000 plateformes.</p>
+                </div>
+              </label>
+
+              <label class="tool-checkbox-card" for="tool-ignorant">
+                <input type="checkbox" id="tool-ignorant" value="ignorant" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">Ignorant</span>
+                    <span class="badge badge-cyan">Téléphone</span>
+                  </div>
+                  <p class="tool-desc">Vérification de présence sur les réseaux et messageries.</p>
+                </div>
+              </label>
+
+              <label class="tool-checkbox-card" for="tool-h8mail">
+                <input type="checkbox" id="tool-h8mail" value="h8mail" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">h8mail</span>
+                    <span class="badge badge-purple">Fuites</span>
+                  </div>
+                  <p class="tool-desc">Détection de brèches de sécurité et fuites de mots de passe.</p>
+                </div>
+              </label>
+
+              <label class="tool-checkbox-card" for="tool-ghunt">
+                <input type="checkbox" id="tool-ghunt" value="ghunt" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">GHunt</span>
+                    <span class="badge badge-red">Google</span>
+                  </div>
+                  <p class="tool-desc">Extraction de métadonnées de compte Google (Gaia ID, services).</p>
+                </div>
+              </label>
+
+              <label class="tool-checkbox-card" for="tool-spiderfoot">
+                <input type="checkbox" id="tool-spiderfoot" value="spiderfoot" checked>
+                <div class="tool-card-content">
+                  <div class="tool-card-header">
+                    <span class="tool-name">SpiderFoot</span>
+                    <span class="badge badge-amber">Recon</span>
+                  </div>
+                  <p class="tool-desc">Corrélations passives d'empreinte réseau et noms de domaine.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Commandes de lancement -->
+          <div class="form-actions">
+            <button type="button" id="btn-start-scan" class="btn btn-primary btn-large">
+              <span>🚀</span> Lancer l'audit global
+            </button>
+            <button type="button" id="btn-cancel-scan" class="btn btn-danger btn-large" style="display: none;">
+              <span>🛑</span> Arrêt d'urgence
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau de bord de progression en temps réel -->
+        <div id="scan-progress-container" class="card progress-card" style="display: none;">
+          <div class="progress-header">
+            <div>
+              <h3 class="card-title">Progression de l'analyse en parallèle</h3>
+              <p id="progress-message" class="text-secondary">Initialisation des adaptateurs...</p>
+            </div>
+            <div id="progress-percent" class="progress-percent-badge">0%</div>
+          </div>
+
+          <div class="progress-bar-track">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+
+          <div class="tools-status-grid">
+            <div id="status-card-holehe" class="tool-status-card">
+              <span class="tool-name">Holehe</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+            <div id="status-card-maigret" class="tool-status-card">
+              <span class="tool-name">Maigret</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+            <div id="status-card-ignorant" class="tool-status-card">
+              <span class="tool-name">Ignorant</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+            <div id="status-card-h8mail" class="tool-status-card">
+              <span class="tool-name">h8mail</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+            <div id="status-card-ghunt" class="tool-status-card">
+              <span class="tool-name">GHunt</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+            <div id="status-card-spiderfoot" class="tool-status-card">
+              <span class="tool-name">SpiderFoot</span>
+              <span class="status-pill status-queued">En attente</span>
+            </div>
+          </div>
+
+          <div id="banner-completed" class="banner-success" style="display: none;">
+            <div class="banner-content">
+              <span class="banner-icon">🎉</span>
+              <div>
+                <strong id="banner-summary-text">Audit finalisé avec succès !</strong>
+                <p id="banner-details-text" class="text-secondary">Plusieurs comptes et données ont été répertoriés.</p>
+              </div>
+            </div>
+            <button type="button" id="btn-goto-view2" class="btn btn-secondary">
+              Consulter les comptes découverts ➔
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VUE 2 : AUDIT ET NETTOYAGE ================= -->
+      <section id="view2" class="view-panel">
+        <header class="view-header">
+          <div>
+            <h1 class="view-title">Audit et assainissement de comptes</h1>
+            <p class="view-description">Consultez la liste des profils découverts, leurs liens de suppression et exercez vos droits RGPD.</p>
+          </div>
+        </header>
+
+        <!-- Statistiques et jauge d'assainissement -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Comptes découverts</span>
+            <span id="stat-total-accounts" class="stat-value">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Facile ou Moyen</span>
+            <span id="stat-easy-medium" class="stat-value text-emerald">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Comptes assainis</span>
+            <span id="stat-processed" class="stat-value text-blue">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Taux d'assainissement</span>
+            <span id="stat-sanitization-rate" class="stat-value text-purple">0%</span>
+          </div>
+        </div>
+
+        <!-- Barre de recherche et filtres -->
+        <div class="card filter-card">
+          <div class="filter-row">
+            <div class="search-input-wrapper">
+              <span class="input-icon">🔍</span>
+              <input type="text" id="input-search-accounts" class="form-input" placeholder="Rechercher par service, domaine ou identifiant...">
+            </div>
+
+            <div class="filter-selects">
+              <select id="filter-difficulty" class="form-select">
+                <option value="all">Toutes difficultés</option>
+                <option value="easy">Facile</option>
+                <option value="medium">Moyen</option>
+                <option value="hard">Difficile</option>
+                <option value="impossible">Impossible</option>
+                <option value="limited">Conditionnel</option>
+                <option value="unknown">Inconnu</option>
+              </select>
+
+              <select id="filter-status" class="form-select">
+                <option value="all">Tous statuts</option>
+                <option value="detected">À traiter</option>
+                <option value="completed">Traités</option>
+              </select>
+
+              <select id="filter-tool" class="form-select">
+                <option value="all">Tous outils</option>
+                <option value="holehe">Holehe</option>
+                <option value="maigret">Maigret</option>
+                <option value="ignorant">Ignorant</option>
+                <option value="ghunt">GHunt</option>
+                <option value="h8mail">h8mail</option>
+                <option value="spiderfoot">SpiderFoot</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tableau des comptes -->
+        <div class="card table-card">
+          <div class="table-responsive">
+            <table class="data-table" id="table-accounts">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Traité</th>
+                  <th>Service ou Plateforme</th>
+                  <th>Identifiant</th>
+                  <th>Source OSINT</th>
+                  <th>Difficulté JustDeleteMe</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-tbody">
+                <tr>
+                  <td colspan="6" class="empty-state">
+                    Aucun compte découvert pour le moment. Lancez un audit depuis l'accueil.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VUE 3 : EXPLORATION OSINT APPROFONDIE ================= -->
+      <section id="view3" class="view-panel">
+        <header class="view-header">
+          <div>
+            <h1 class="view-title">Exploration OSINT approfondie</h1>
+            <p class="view-description">Visualisez les données détaillées et rapports spécialisés par outil d'investigation.</p>
+          </div>
+        </header>
+
+        <!-- Onglets secondaires par outil -->
+        <div class="subtabs-nav">
+          <button type="button" class="subtab-btn active" data-subtab="subtab-holehe">Holehe</button>
+          <button type="button" class="subtab-btn" data-subtab="subtab-maigret">Maigret</button>
+          <button type="button" class="subtab-btn" data-subtab="subtab-ignorant">Ignorant</button>
+          <button type="button" class="subtab-btn" data-subtab="subtab-ghunt">GHunt</button>
+          <button type="button" class="subtab-btn" data-subtab="subtab-h8mail">h8mail</button>
+          <button type="button" class="subtab-btn" data-subtab="subtab-spiderfoot">SpiderFoot</button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="subtabs-content">
+          <!-- Onglet Holehe -->
+          <div id="subtab-holehe" class="subtab-panel active">
+            <div class="card">
+              <h2 class="card-title">Résultats détaillés Holehe</h2>
+              <div id="holehe-results-container" class="results-container">
+                <p class="text-secondary">Aucune analyse Holehe disponible pour la session en cours.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet Maigret -->
+          <div id="subtab-maigret" class="subtab-panel">
+            <div class="card">
+              <div class="card-header-flex">
+                <h2 class="card-title">Rapport Maigret et profils publics</h2>
+                <button type="button" id="btn-open-maigret-report" class="btn btn-secondary btn-small" style="display: none;">
+                  Ouvrir dans le navigateur
+                </button>
+              </div>
+              <div id="maigret-results-container" class="results-container">
+                <p class="text-secondary">Aucune analyse Maigret disponible pour la session en cours.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet Ignorant -->
+          <div id="subtab-ignorant" class="subtab-panel">
+            <div class="card">
+              <h2 class="card-title">Détections téléphoniques Ignorant</h2>
+              <div id="ignorant-results-container" class="results-container">
+                <p class="text-secondary">Aucune analyse Ignorant disponible pour la session en cours.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet GHunt -->
+          <div id="subtab-ghunt" class="subtab-panel">
+            <div class="card">
+              <h2 class="card-title">Profil Google GHunt</h2>
+              <div id="ghunt-results-container" class="results-container">
+                <p class="text-secondary">Aucune donnée GHunt pour le moment.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet h8mail -->
+          <div id="subtab-h8mail" class="subtab-panel">
+            <div class="card">
+              <h2 class="card-title">Fuites et brèches de données h8mail</h2>
+              <div id="h8mail-results-container" class="results-container">
+                <p class="text-secondary">Aucune fuite de données répertoriée.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet SpiderFoot -->
+          <div id="subtab-spiderfoot" class="subtab-panel">
+            <div class="card">
+              <h2 class="card-title">Corrélations passives SpiderFoot</h2>
+              <div id="spiderfoot-results-container" class="results-container">
+                <p class="text-secondary">Aucune corrélation passive pour le moment.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VUE 4 : DOSSIERS ET PARAMÈTRES ================= -->
+      <section id="view4" class="view-panel">
+        <header class="view-header">
+          <div>
+            <h1 class="view-title">Dossiers locaux et paramètres</h1>
+            <p class="view-description">Gérez les historiques de sessions, l'état de santé des outils et vos clés optionnelles.</p>
+          </div>
+        </header>
+
+        <!-- Dossiers archivés -->
+        <div class="card">
+          <div class="card-header-flex">
+            <h2 class="card-title">Historique des audits sauvegardés</h2>
+            <div class="actions-group">
+              <button type="button" id="btn-import-json-trigger" class="btn btn-secondary btn-small">
+                Importer un dossier JSON
+              </button>
+              <input type="file" id="file-import-json" accept=".json" style="display: none;">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="table-scans">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Cibles</th>
+                  <th>Outils</th>
+                  <th>Comptes</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="scans-tbody">
+                <tr>
+                  <td colspan="5" class="empty-state">
+                    Aucun dossier archivé dans la base SQLite locale.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Diagnostic de santé des 6 outils -->
+        <div class="card">
+          <div class="card-header-flex">
+            <h2 class="card-title">Diagnostic de santé des 6 outils OSINT</h2>
+            <button type="button" id="btn-check-all-health" class="btn btn-secondary btn-small">
+              Vérifier tous les outils
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="table-health">
+              <thead>
+                <tr>
+                  <th>Outil</th>
+                  <th>Usage principal</th>
+                  <th>Statut</th>
+                  <th>Version</th>
+                  <th>Emplacement binaire</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="health-tbody">
+                <!-- Rempli dynamiquement -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Paramètres et clés optionnelles -->
+        <div class="card">
+          <h2 class="card-title">Clés API et configurations optionnelles</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="input-hibp-key" class="form-label">Clé API HaveIBeenPwned (optionnelle)</label>
+              <input type="password" id="input-hibp-key" class="form-input" placeholder="Clé pour enrichir h8mail">
+            </div>
+
+            <div class="form-group">
+              <label for="input-hunter-key" class="form-label">Clé API Hunter.io (optionnelle)</label>
+              <input type="password" id="input-hunter-key" class="form-input" placeholder="Clé pour enrichir les domaines">
+            </div>
+          </div>
+
+          <div class="info-box">
+            <strong>Session Google GHunt</strong>
+            <p class="text-secondary">Pour configurer la session Google dans GHunt, lancez la commande <code>ghunt login</code> dans votre terminal afin de générer les jetons d'authentification.</p>
+          </div>
+
+          <div class="form-actions" style="margin-top: 1rem;">
+            <button type="button" id="btn-save-settings" class="btn btn-primary">
+              Enregistrer les paramètres
+            </button>
+            <span id="settings-save-feedback" class="feedback-text" style="display: none;">
+              Paramètres enregistrés avec succès !
+            </span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODALE RGPD ARTICLE 17 ================= -->
+  <div id="modal-gdpr" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Exercice du droit à l'effacement (Article 17 du RGPD)</h3>
+        <button type="button" id="btn-modal-close" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="gdpr-input-recipient" class="form-label">Destinataire DPO</label>
+          <input type="email" id="gdpr-input-recipient" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="gdpr-input-subject" class="form-label">Objet du message</label>
+          <input type="text" id="gdpr-input-subject" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="gdpr-input-body" class="form-label">Contenu du message (conforme sans tiret)</label>
+          <textarea id="gdpr-input-body" class="form-textarea" rows="12"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="footer-left">
+          <span id="modal-feedback-text" class="feedback-text"></span>
+        </div>
+        <div class="footer-right">
+          <button type="button" id="btn-gdpr-copy" class="btn btn-secondary">
+            Copier le texte
+          </button>
+          <button type="button" id="btn-gdpr-mailto" class="btn btn-secondary">
+            Ouvrir le client courriel
+          </button>
+          <button type="button" id="btn-gdpr-save" class="btn btn-primary">
+            Enregistrer la démarche
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
