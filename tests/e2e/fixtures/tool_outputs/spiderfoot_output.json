@@ -1,0 +1,23 @@
+[
+  {
+    "generated": 1794169979,
+    "type": "ACCOUNT_EXTERNAL_OWNED",
+    "data": "jeandupont on Spotify (https://open.spotify.com/user/jeandupont)",
+    "module": "sfp_accounts",
+    "source": "open.spotify.com"
+  },
+  {
+    "generated": 1794169980,
+    "type": "ACCOUNT_EXTERNAL_OWNED",
+    "data": "jeandupont on Twitter (https://twitter.com/jeandupont)",
+    "module": "sfp_accounts",
+    "source": "twitter.com"
+  },
+  {
+    "generated": 1794169982,
+    "type": "EMAILADDR_COMPROMISED",
+    "data": "jeandupont@icloud.com compromised in 000webhost",
+    "module": "sfp_haveibeenpwned",
+    "source": "haveibeenpwned.com"
+  }
+]

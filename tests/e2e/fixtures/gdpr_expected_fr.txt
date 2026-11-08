@@ -1,0 +1,23 @@
+Objet : Exercice du droit à l'effacement de mes données personnelles (Article 17 du RGPD)
+
+Madame, Monsieur,
+
+Je m'adresse à vous en votre qualité de responsable du traitement des données personnelles pour le service {service_name}.
+
+En application de l'article 17.1 du Règlement général sur la protection des données (Règlement UE 2016/679) et de la loi Informatique et Libertés, je vous demande d'effacer de manière intégrale et définitive l'ensemble des données personnelles me concernant ainsi que le compte associé à mes identifiants.
+
+Mes informations d'identification sont les suivantes :
+Nom et prénom : {user_full_name}
+Adresse électronique associée : {user_email}
+Identifiant ou pseudonyme : {account_username}
+Numéro de téléphone lié (le cas échéant) : {user_phone}
+
+Je formule cette demande en application de l'article 17.1 du RGPD, ne souhaitant plus utiliser vos services et retirant tout consentement préalablement accordé pour le traitement de mes données.
+
+En vertu de l'article 19 du RGPD, je vous saurais gré de bien vouloir notifier cette demande d'effacement à tous les destinataires et sous traitants auxquels vous auriez communiqué mes informations.
+
+Je vous rappelle que l'article 12.3 du RGPD vous impartit un délai maximal d'un mois à compter de la réception de ce message pour satisfaire à ma requête et me confirmer par écrit la destruction effective de l'ensemble de mes données. À défaut de confirmation écrite dans ce délai légal, je me réserve la possibilité de déposer une réclamation formelle auprès de la Commission Nationale de l'Informatique et des Libertés (CNIL).
+
+Dans l'attente de votre confirmation écrite, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+{user_full_name}

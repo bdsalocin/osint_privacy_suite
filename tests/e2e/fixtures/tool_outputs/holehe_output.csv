@@ -1,0 +1,6 @@
+name,domain,rateLimit,exists,emailrecovery,phoneNumber,others
+github,github.com,False,True,null,null,null
+spotify,spotify.com,False,True,null,null,null
+office365,office365.com,False,True,null,null,null
+amazon,amazon.com,False,False,null,null,null
+twitter,twitter.com,True,False,null,null,null

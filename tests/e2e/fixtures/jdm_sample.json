@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Spotify",
+    "url": "https://support.spotify.com/article/close-account/",
+    "difficulty": "easy",
+    "domains": ["spotify.com"],
+    "notes": "Follow the link to close your account.",
+    "notes_fr": "Suivez le lien pour fermer votre compte directement.",
+    "email": "privacy@spotify.com"
+  },
+  {
+    "name": "GitHub",
+    "url": "https://github.com/settings/admin",
+    "difficulty": "easy",
+    "domains": ["github.com"],
+    "notes": "Navigate to settings and delete account at bottom.",
+    "notes_fr": "Accédez aux paramètres de votre compte et supprimez-le dans la section Danger Zone.",
+    "email": "support@github.com"
+  },
+  {
+    "name": "Amazon",
+    "url": "https://www.amazon.com/gp/help/customer/display.html?nodeId=GDK92DNLSGWTV6MP",
+    "difficulty": "medium",
+    "domains": ["amazon.com", "amazon.fr"],
+    "notes": "Request account closure through customer service or privacy portal.",
+    "notes_fr": "Demandez la clôture du compte via le portail de confidentialité ou le service client.",
+    "email": "cis@amazon.fr"
+  },
+  {
+    "name": "Microsoft Account",
+    "url": "https://account.live.com/closeaccount.aspx",
+    "difficulty": "hard",
+    "domains": ["microsoft.com", "office.com", "office365.com", "live.com", "outlook.com", "hotmail.com"],
+    "notes": "Mark your account for closure. A 30 or 60 day waiting period is enforced.",
+    "notes_fr": "Marquez votre compte pour suppression. Un délai de rétractation de 30 ou 60 jours est obligatoire.",
+    "email": "msdpo@microsoft.com"
+  },
+  {
+    "name": "Twitter / X",
+    "url": "https://twitter.com/settings/deactivate",
+    "difficulty": "medium",
+    "domains": ["twitter.com", "x.com"],
+    "notes": "Deactivate your account. Permanent deletion takes 30 days.",
+    "notes_fr": "Désactivez votre compte. La suppression définitive intervient sous 30 jours.",
+    "email": "dpo@twitter.com"
+  },
+  {
+    "name": "Facebook",
+    "url": "https://www.facebook.com/help/delete_account",
+    "difficulty": "medium",
+    "domains": ["facebook.com", "fb.com"],
+    "notes": "Request deletion through account management center.",
+    "notes_fr": "Demandez la suppression via l'Espace Comptes de Meta.",
+    "email": "dpo@meta.com"
+  },
+  {
+    "name": "Instagram",
+    "url": "https://instagram.com/accounts/remove/request/permanent/",
+    "difficulty": "medium",
+    "domains": ["instagram.com"],
+    "notes": "Must request permanent deletion from web browser.",
+    "notes_fr": "La demande de suppression permanente doit être effectuée depuis un navigateur web.",
+    "email": "dpo@meta.com"
+  },
+  {
+    "name": "Snapchat",
+    "url": "https://accounts.snapchat.com/accounts/delete_account",
+    "difficulty": "hard",
+    "domains": ["snapchat.com"],
+    "notes": "Log into accounts portal. Account is deactivated for 30 days before full erasure.",
+    "notes_fr": "Connectez-vous au portail. Le compte est désactivé 30 jours avant purge intégrale.",
+    "email": "dpo@snap.com"
+  },
+  {
+    "name": "Steam",
+    "url": "https://help.steampowered.com/en/wizard/HelpWithAccountData",
+    "difficulty": "impossible",
+    "domains": ["steampowered.com", "steamcommunity.com"],
+    "notes": "Valve does not allow self-service deletion without manual proof of ownership and purchase history verification.",
+    "notes_fr": "Valve refuse la suppression automatique et exige de multiples preuves d'achats historiques.",
+    "email": "privacy@valvesoftware.com"
+  },
+  {
+    "name": "Netflix",
+    "url": "https://help.netflix.com/en/node/100625",
+    "difficulty": "hard",
+    "domains": ["netflix.com"],
+    "notes": "Cancel subscription and send email to privacy@netflix.com from registered email.",
+    "notes_fr": "Résiliez l'abonnement puis écrivez à privacy@netflix.com depuis l'adresse enregistrée.",
+    "email": "privacy@netflix.com"
+  },
+  {
+    "name": "Google",
+    "url": "https://myaccount.google.com/deleteaccount",
+    "difficulty": "limited",
+    "domains": ["google.com", "gmail.com", "googlemail.com"],
+    "notes": "Deletion options vary according to regional jurisdiction and enterprise administration.",
+    "notes_fr": "Les options de suppression dépendent de la juridiction et du type de compte.",
+    "email": "dpo@google.com"
+  },
+  {
+    "name": "PayPal",
+    "url": "https://www.paypal.com/myaccount/settings",
+    "difficulty": "limited",
+    "domains": ["paypal.com"],
+    "notes": "Financial regulations require retention of transaction history for legal limitation period.",
+    "notes_fr": "Les obligations bancaires imposent la conservation des transactions selon les délais légaux.",
+    "email": "dpo@paypal.com"
+  }
+]

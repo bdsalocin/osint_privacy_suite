@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "target": "jeandupont@icloud.com",
+      "pwn_num": 2,
+      "data": [
+        {
+          "source": "ExploitIn",
+          "breach": "Collection1",
+          "date": "2019-01-07",
+          "type": "plaintext"
+        },
+        {
+          "source": "AntiPublic",
+          "breach": "ComboList2018",
+          "date": "2018-05-12",
+          "type": "hash"
+        }
+      ]
+    }
+  ]
+}

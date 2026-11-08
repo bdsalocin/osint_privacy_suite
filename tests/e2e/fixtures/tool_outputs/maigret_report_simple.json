@@ -1,0 +1,48 @@
+{
+  "GitHub": {
+    "status": {
+      "status": "Claimed",
+      "url": "https://github.com/jeandupont",
+      "site_name": "GitHub",
+      "ids": {
+        "uid": "10423019",
+        "image": "https://avatars.githubusercontent.com/u/10423019?v=4",
+        "fullname": "Jean Dupont",
+        "company": null
+      },
+      "tags": ["coding", "tech"]
+    },
+    "url_user": "https://github.com/jeandupont",
+    "url_main": "https://www.github.com/",
+    "http_status": 200,
+    "rank": 10
+  },
+  "Trello": {
+    "status": {
+      "status": "Claimed",
+      "url": "https://trello.com/jeandupont",
+      "site_name": "Trello",
+      "ids": {
+        "fullname": "Jean Dupont"
+      },
+      "tags": ["productivity"]
+    },
+    "url_user": "https://trello.com/jeandupont",
+    "url_main": "https://trello.com/",
+    "http_status": 200,
+    "rank": 45
+  },
+  "CodePen": {
+    "status": {
+      "status": "Claimed",
+      "url": "https://codepen.io/jeandupont",
+      "site_name": "CodePen",
+      "ids": {},
+      "tags": ["coding"]
+    },
+    "url_user": "https://codepen.io/jeandupont",
+    "url_main": "https://codepen.io/",
+    "http_status": 200,
+    "rank": 120
+  }
+}

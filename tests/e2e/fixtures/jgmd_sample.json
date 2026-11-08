@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Google",
+    "url": "https://takeout.google.com/",
+    "difficulty": "easy",
+    "notes": "Select the data products to include in your download archive.",
+    "notes_fr": "Sélectionnez les données et services Google à inclure dans l'archive."
+  },
+  {
+    "name": "Facebook",
+    "url": "https://accountscenter.facebook.com/info_and_permissions",
+    "difficulty": "easy",
+    "notes": "Request a copy of your information across Facebook and Instagram.",
+    "notes_fr": "Téléchargez une copie de vos informations personnelles Meta."
+  },
+  {
+    "name": "Instagram",
+    "url": "https://accountscenter.instagram.com/info_and_permissions/dyi/",
+    "difficulty": "easy",
+    "notes": "Direct download link for your photos and messages.",
+    "notes_fr": "Lien de téléchargement direct de vos photos et messages."
+  },
+  {
+    "name": "Twitter / X",
+    "url": "https://twitter.com/settings/your_twitter_data",
+    "difficulty": "easy",
+    "notes": "Request your archive under Twitter Data settings.",
+    "notes_fr": "Demandez l'archive de vos données depuis les paramètres de votre compte."
+  },
+  {
+    "name": "Apple",
+    "url": "https://privacy.apple.com",
+    "difficulty": "easy",
+    "notes": "Sign in to request a copy of your data stored on Apple servers.",
+    "notes_fr": "Connectez-vous pour demander une copie des données stockées par Apple."
+  },
+  {
+    "name": "Spotify",
+    "url": "https://www.spotify.com/account/privacy/",
+    "difficulty": "medium",
+    "notes": "Request data package in account privacy settings.",
+    "notes_fr": "Demandez votre ensemble de données dans les paramètres de confidentialité."
+  },
+  {
+    "name": "GitHub",
+    "url": "https://github.com/settings/admin",
+    "difficulty": "easy",
+    "notes": "Start export of your personal account data.",
+    "notes_fr": "Lancez l'export de vos données de compte personnel."
+  },
+  {
+    "name": "Snapchat",
+    "url": "https://support.snapchat.com/en-US/a/download-my-data",
+    "difficulty": "easy",
+    "notes": "Submit download request from Snapchat account settings.",
+    "notes_fr": "Soumettez une demande de téléchargement depuis vos paramètres."
+  },
+  {
+    "name": "Amazon",
+    "url": "https://www.amazon.com/hz/privacy-central/data-requests/preview.html",
+    "difficulty": "medium",
+    "notes": "Request your data categories through the privacy central page.",
+    "notes_fr": "Demandez les catégories de données souhaitées sur Privacy Central."
+  }
+]

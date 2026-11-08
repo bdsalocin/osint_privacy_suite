@@ -1,0 +1,12 @@
+[+] Target : jeandupont@gmail.com
+[+] Google Account Found
+    Name: Jean Dupont
+    Gaia ID: 104230198827361
+    Profile Picture: https://lh3.googleusercontent.com/a/ACg8ocK12345
+    Last Profile Edit: 2024-03-15T10:20:00Z
+    User Types: GOOGLE_USER, GOOGLE_ONE_SUBSCRIBER
+
+[+] Activated Google Services:
+    - YouTube Channel: UC104230198827361
+    - Google Photos: Album public active
+    - Google Maps: 14 reviews published
