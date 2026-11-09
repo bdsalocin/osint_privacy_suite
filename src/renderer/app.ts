@@ -12,11 +12,19 @@ import type {
   OrchestratorResult,
   OrchestratorProgressEvent,
   ToolStatus,
+  UnifiedAccount,
+  UnifiedLeak,
 } from '../core/types.js';
 import type {
   DiscoveredAccountRecord,
   ScanRecord,
 } from '../storage/database.js';
+import type {
+  RiskLevel,
+  RiskScoreResult,
+  RemediationRecommendation,
+} from '../core/risk-engine.js';
+import type { AuditComparisonResult } from '../core/audit-comparator.js';
 
 declare global {
   interface Window {
@@ -28,6 +36,8 @@ declare global {
 let currentScanId: string | null = null;
 let currentAccounts: DiscoveredAccountRecord[] = [];
 let currentResult: OrchestratorResult | null = null;
+let currentRiskResult: RiskScoreResult | null = null;
+let currentScanLeaks: UnifiedLeak[] = [];
 const toolProgressMap: Record<SupportedTool, { status: ToolStatus; progress: number; message: string }> = {
   holehe: { status: 'queued', progress: 0, message: 'En attente' },
   maigret: { status: 'queued', progress: 0, message: 'En attente' },
@@ -89,6 +99,127 @@ function getStatusLabel(status: ToolStatus): string {
     default:
       return 'En attente';
   }
+}
+
+/* ==========================================================================
+   GESTION DU THEME SOMBRE ET CLAIR
+   ========================================================================== */
+const THEME_STORAGE_KEY = 'osint_theme';
+export type AppTheme = 'dark' | 'light';
+
+const SVG_SUN = `
+  <svg class="svg-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"></circle>
+    <line x1="12" y1="1" x2="12" y2="3"></line>
+    <line x1="12" y1="21" x2="12" y2="23"></line>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+    <line x1="1" y1="12" x2="3" y2="12"></line>
+    <line x1="21" y1="12" x2="23" y2="12"></line>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+  </svg>
+`;
+
+const SVG_MOON = `
+  <svg class="svg-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
+`;
+
+export function getSavedTheme(): AppTheme {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') {
+      return saved;
+    }
+  } catch {
+    // Local storage unavailable
+  }
+  return 'dark';
+}
+
+export function applyTheme(theme: AppTheme): void {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light-theme', isLight);
+  document.body.classList.toggle('dark-theme', !isLight);
+
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // Storage unavailable
+  }
+
+  const iconContainer = document.getElementById('theme-toggle-icon');
+  const labelElement = document.getElementById('theme-toggle-label');
+
+  if (iconContainer) {
+    iconContainer.innerHTML = isLight ? SVG_MOON : SVG_SUN;
+  }
+  if (labelElement) {
+    labelElement.textContent = isLight ? 'Mode sombre' : 'Mode clair';
+  }
+}
+
+export function toggleTheme(): void {
+  const isCurrentlyLight = document.body.classList.contains('light-theme');
+  const nextTheme: AppTheme = isCurrentlyLight ? 'dark' : 'light';
+  applyTheme(nextTheme);
+}
+
+export function initTheme(): void {
+  const toggleBtn = document.getElementById('theme-toggle') || document.getElementById('btn-theme-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      toggleTheme();
+    });
+  }
+
+  const initialTheme = getSavedTheme();
+  applyTheme(initialTheme);
+}
+
+/* ==========================================================================
+   MODULE DE NOTIFICATIONS TOAST
+   ========================================================================== */
+function showToast(
+  message: string,
+  type: 'info' | 'success' | 'warning' | 'error' = 'info',
+  durationMs = 4000
+): void {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+
+  let icon = 'ℹ️';
+  if (type === 'success') icon = '✅';
+  if (type === 'warning') icon = '⚠️';
+  if (type === 'error') icon = '❌';
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icon}</span>
+    <span class="toast-message">${escapeHtml(message)}</span>
+    <button type="button" class="toast-close" aria-label="Fermer la notification">&times;</button>
+  `;
+
+  const btnClose = toast.querySelector('.toast-close');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      toast.classList.add('toast-fadeout');
+      setTimeout(() => toast.remove(), 250);
+    });
+  }
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('toast-fadeout');
+      setTimeout(() => toast.remove(), 250);
+    }
+  }, durationMs);
 }
 
 /* ==========================================================================
@@ -244,9 +375,11 @@ async function startUnifiedScan(): Promise<void> {
 
     currentResult = result;
     currentScanId = result.scanId;
+    currentScanLeaks = result.leaks || [];
 
     // Load newly discovered accounts
     currentAccounts = await window.electronAPI.getAccounts(result.scanId);
+    await refreshRiskScore();
 
     // Finalize progress bar
     if (progressBarFill) progressBarFill.style.width = '100%';
@@ -339,6 +472,222 @@ function initView2(): void {
   });
 
   initGdprModal();
+  initExportButtonsView2();
+  refreshRiskScore();
+}
+
+function initExportButtonsView2(): void {
+  const btnExportHtml = document.getElementById('btn-export-html-view2');
+  const btnExportPdf = document.getElementById('btn-export-pdf-view2');
+
+  if (btnExportHtml) {
+    btnExportHtml.addEventListener('click', async () => {
+      if (!currentScanId) {
+        showToast('Veuillez d abord lancer ou charger un audit pour exporter le rapport.', 'warning');
+        return;
+      }
+      btnExportHtml.setAttribute('disabled', 'true');
+      showToast('Génération du rapport HTML en cours...', 'info');
+      try {
+        const res = await window.electronAPI.exportHtmlReport(currentScanId);
+        if (res.canceled) {
+          showToast('Exportation HTML annulée.', 'info');
+        } else if (res.success) {
+          showToast('Rapport HTML autonome exporté avec succès !', 'success');
+        } else {
+          showToast(`Échec de l exportation HTML : ${res.error || 'Erreur non précisée'}`, 'error');
+        }
+      } catch (err: any) {
+        showToast(`Erreur : ${err?.message || err}`, 'error');
+      } finally {
+        btnExportHtml.removeAttribute('disabled');
+      }
+    });
+  }
+
+  if (btnExportPdf) {
+    btnExportPdf.addEventListener('click', async () => {
+      if (!currentScanId) {
+        showToast('Veuillez d abord lancer ou charger un audit pour exporter le rapport.', 'warning');
+        return;
+      }
+      btnExportPdf.setAttribute('disabled', 'true');
+      showToast('Génération du document PDF en cours...', 'info');
+      try {
+        const res = await window.electronAPI.exportPdfReport(currentScanId);
+        if (res.canceled) {
+          showToast('Exportation PDF annulée.', 'info');
+        } else if (res.success) {
+          showToast('Rapport PDF officiel exporté avec succès !', 'success');
+        } else {
+          showToast(`Échec de l exportation PDF : ${res.error || 'Erreur non précisée'}`, 'error');
+        }
+      } catch (err: any) {
+        showToast(`Erreur : ${err?.message || err}`, 'error');
+      } finally {
+        btnExportPdf.removeAttribute('disabled');
+      }
+    });
+  }
+}
+
+function getRiskLevelInfo(level?: RiskLevel | string): {
+  label: string;
+  shortLabel: string;
+  color: string;
+  badgeClass: string;
+  frenchBadgeClass: string;
+} {
+  const l = (level || 'low').toLowerCase();
+  switch (l) {
+    case 'critical':
+      return {
+        label: 'Risque critique',
+        shortLabel: 'Critique',
+        color: '#ef4444',
+        badgeClass: 'badge-risk-critical',
+        frenchBadgeClass: 'badge-risk-critique',
+      };
+    case 'elevated':
+      return {
+        label: 'Risque élevé',
+        shortLabel: 'Élevé',
+        color: '#f97316',
+        badgeClass: 'badge-risk-elevated',
+        frenchBadgeClass: 'badge-risk-eleve',
+      };
+    case 'moderate':
+      return {
+        label: 'Risque modéré',
+        shortLabel: 'Modéré',
+        color: '#f59e0b',
+        badgeClass: 'badge-risk-moderate',
+        frenchBadgeClass: 'badge-risk-moyen',
+      };
+    case 'low':
+    default:
+      return {
+        label: 'Risque faible',
+        shortLabel: 'Faible',
+        color: '#10b981',
+        badgeClass: 'badge-risk-low',
+        frenchBadgeClass: 'badge-risk-faible',
+      };
+  }
+}
+
+async function refreshRiskScore(
+  accounts?: (UnifiedAccount | DiscoveredAccountRecord)[],
+  leaks?: UnifiedLeak[]
+): Promise<void> {
+  try {
+    const targetAccounts = accounts !== undefined ? accounts : currentAccounts;
+    const targetLeaks = leaks !== undefined ? leaks : currentScanLeaks;
+    const riskResult = await window.electronAPI.calculateRiskScore(targetAccounts, targetLeaks);
+    currentRiskResult = riskResult;
+    renderRiskScoreUI(riskResult);
+  } catch (err: any) {
+    console.error('Erreur lors du calcul du score de risque :', err);
+  }
+}
+
+function renderRiskScoreUI(result: RiskScoreResult): void {
+  const clampedScore = Math.max(0, Math.min(100, Math.round(result.score || 0)));
+  const circumference = 439.82; // 2 * Math.PI * 70
+  const strokeOffset = (circumference * (1 - clampedScore / 100)).toFixed(2);
+  const levelInfo = getRiskLevelInfo(result.level);
+
+  // 1. Cercle SVG
+  const circleArc = document.getElementById('gauge-progress-circle') as SVGCircleElement | null;
+  if (circleArc) {
+    circleArc.style.strokeDashoffset = strokeOffset;
+    circleArc.style.stroke = levelInfo.color;
+  }
+
+  // 2. Chiffre et libelle central
+  const scoreVal = document.getElementById('gauge-score-value');
+  const levelText = document.getElementById('gauge-level-text');
+  if (scoreVal) scoreVal.textContent = String(clampedScore);
+  if (levelText) {
+    levelText.textContent = levelInfo.shortLabel.toUpperCase();
+    levelText.style.fill = levelInfo.color;
+  }
+
+  // 3. Badge textuel de niveau
+  const levelBadge = document.getElementById('risk-level-badge');
+  if (levelBadge) {
+    levelBadge.textContent = levelInfo.label;
+    levelBadge.className = `badge ${levelInfo.badgeClass} ${levelInfo.frenchBadgeClass}`;
+  }
+
+  // 4. Decomposition metrique
+  const uncleanedEl = document.getElementById('risk-uncleaned-count');
+  const accountsScoreEl = document.getElementById('risk-accounts-score');
+  const criticalLeaksEl = document.getElementById('risk-critical-leaks');
+  const leaksScoreEl = document.getElementById('risk-leaks-score');
+
+  if (uncleanedEl) uncleanedEl.textContent = String(result.breakdown?.uncleanedCount ?? 0);
+  if (accountsScoreEl) accountsScoreEl.textContent = `${result.breakdown?.accountsScore ?? 0} / 60`;
+  if (criticalLeaksEl) criticalLeaksEl.textContent = String(result.breakdown?.criticalLeaksCount ?? 0);
+  if (leaksScoreEl) leaksScoreEl.textContent = `${result.breakdown?.leaksScore ?? 0} / 100`;
+
+  // 5. Recommandations prioritaires
+  renderRecommendations(result.recommendations || []);
+}
+
+function renderRecommendations(recommendations: RemediationRecommendation[]): void {
+  const container = document.getElementById('risk-recommendations-list');
+  const countBadge = document.getElementById('recommendations-count-badge');
+  if (!container) return;
+
+  const count = recommendations.length;
+  if (countBadge) {
+    const word = count === 1 ? 'recommandation' : 'recommandations';
+    countBadge.textContent = `${count} ${word}`;
+  }
+
+  if (count === 0) {
+    container.innerHTML = `
+      <div class="empty-recommendations-state">
+        <p class="text-secondary">Aucune recommandation active. Vos comptes identifiés sont assainis ou aucune fuite n a été détectée.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const priorityLabels: Record<number, { label: string; cssClass: string }> = {
+    1: { label: 'Priorité 1', cssClass: 'badge-risk-critical badge-risk-critique' },
+    2: { label: 'Priorité 2', cssClass: 'badge-risk-elevated badge-risk-eleve' },
+    3: { label: 'Priorité 3', cssClass: 'badge-risk-moderate badge-risk-moyen' },
+    4: { label: 'Priorité 4', cssClass: 'badge-blue' },
+  };
+
+  const actionIcons: Record<string, string> = {
+    password: '🔑 Mot de passe',
+    delete: '🗑️ Suppression',
+    gdpr: '📜 Exercice RGPD',
+    export: '📦 Sauvegarde',
+  };
+
+  container.innerHTML = recommendations
+    .map((rec) => {
+      const pInfo = priorityLabels[rec.priority] || priorityLabels[4];
+      const actionIcon = actionIcons[rec.actionType] || '🛡️ Action';
+      return `
+        <div class="recommendation-item-card priority-${rec.priority}">
+          <div class="rec-header">
+            <div class="rec-tags">
+              <span class="badge ${pInfo.cssClass}">${pInfo.label}</span>
+              ${rec.targetService ? `<span class="badge badge-subtle">${escapeHtml(rec.targetService)}</span>` : ''}
+            </div>
+            <span class="rec-action-type">${actionIcon}</span>
+          </div>
+          <h4 class="rec-title">${escapeHtml(rec.title)}</h4>
+          <p class="rec-desc text-secondary">${escapeHtml(rec.description)}</p>
+        </div>
+      `;
+    })
+    .join('');
 }
 
 function renderAccountsTable(): void {
@@ -416,7 +765,7 @@ function renderAccountsTable(): void {
         <input type="checkbox" class="account-status-checkbox" data-id="${escapeHtml(acc.id)}" ${isCompleted ? 'checked' : ''}>
       </td>
       <td>
-        <div class="service-title" style="font-weight: 600; color: #fff;">${escapeHtml(acc.service_name)}</div>
+        <div class="service-title" style="font-weight: 600; color: var(--text-primary);">${escapeHtml(acc.service_name)}</div>
         <div class="text-secondary" style="font-size: 0.75rem;">${escapeHtml(acc.domain)}</div>
       </td>
       <td>
@@ -458,6 +807,7 @@ function renderAccountsTable(): void {
           tr.classList.remove('row-completed');
         }
         updateAccountStats();
+        await refreshRiskScore();
       });
     }
 
@@ -742,12 +1092,12 @@ function populateView3(result: OrchestratorResult): void {
           <div style="display: flex; gap: 1rem; align-items: center;">
             <div style="font-size: 2.5rem;">👤</div>
             <div>
-              <h3 style="color: #fff;">${escapeHtml(meta.name || gAcc.accountIdentifier)}</h3>
+              <h3 style="color: var(--text-primary);">${escapeHtml(meta.name || gAcc.accountIdentifier)}</h3>
               <p class="text-secondary" style="font-size: 0.85rem;">Gaia ID : <code>${escapeHtml(meta.gaiaId || 'Non extrait')}</code></p>
             </div>
           </div>
           <div style="margin-top: 1rem;">
-            <strong style="font-size: 0.85rem; color: #fff;">Services Google détectés :</strong>
+            <strong style="font-size: 0.85rem; color: var(--text-primary);">Services Google détectés :</strong>
             <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem;">
               ${Array.isArray(meta.services) && meta.services.length > 0 ? meta.services.join(', ') : 'Profil public, YouTube, Google Maps'}
             </p>
@@ -765,30 +1115,32 @@ function populateView3(result: OrchestratorResult): void {
     const leaks = result.leaks || [];
     if (leaks.length > 0) {
       h8mailContainer.innerHTML = `
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Brèche ou Fuite</th>
-              <th>Cible</th>
-              <th>Données compromises</th>
-              <th>Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${leaks
-              .map(
-                (l) => `
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td><strong style="color: #f87171;">${escapeHtml(l.breachName)}</strong></td>
-                <td><code>${escapeHtml(l.target)}</code></td>
-                <td>${(l.dataClasses || []).map((c) => `<span class="badge badge-purple">${escapeHtml(c)}</span>`).join(' ')}</td>
-                <td class="text-secondary" style="font-size: 0.8rem;">${escapeHtml(l.details)}</td>
+                <th>Brèche ou Fuite</th>
+                <th>Cible</th>
+                <th>Données compromises</th>
+                <th>Détails</th>
               </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${leaks
+                .map(
+                  (l) => `
+                <tr>
+                  <td><strong style="color: #f87171;">${escapeHtml(l.breachName)}</strong></td>
+                  <td><code>${escapeHtml(l.target)}</code></td>
+                  <td>${(l.dataClasses || []).map((c) => `<span class="badge badge-purple">${escapeHtml(c)}</span>`).join(' ')}</td>
+                  <td class="text-secondary" style="font-size: 0.8rem;">${escapeHtml(l.details)}</td>
+                </tr>
+              `
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </div>
       `;
     } else {
       h8mailContainer.innerHTML = `
@@ -828,6 +1180,8 @@ function populateView3(result: OrchestratorResult): void {
    VUE 4 : DOSSIERS LOCAUX ET PARAMÈTRES
    ========================================================================== */
 function initView4(): void {
+  initComparatorView4();
+
   const btnCheckAllHealth = document.getElementById('btn-check-all-health');
   if (btnCheckAllHealth) {
     btnCheckAllHealth.addEventListener('click', async () => {
@@ -895,12 +1249,199 @@ function initView4(): void {
   }
 }
 
+/* ==========================================================================
+   COMPARATEUR D AUDITS CHRONOLOGIQUE
+   ========================================================================== */
+function initComparatorView4(): void {
+  const btnCompare = document.getElementById('btn-compare-audits');
+  if (!btnCompare) return;
+
+  btnCompare.addEventListener('click', async () => {
+    const selectA = document.getElementById('select-audit-a') as HTMLSelectElement | null;
+    const selectB = document.getElementById('select-audit-b') as HTMLSelectElement | null;
+
+    const scanIdA = selectA?.value;
+    const scanIdB = selectB?.value;
+
+    if (!scanIdA || !scanIdB) {
+      showToast('Veuillez sélectionner deux audits pour effectuer la comparaison.', 'warning');
+      return;
+    }
+
+    if (scanIdA === scanIdB) {
+      showToast('Veuillez sélectionner deux audits distincts pour observer une évolution.', 'warning');
+      return;
+    }
+
+    btnCompare.setAttribute('disabled', 'true');
+    btnCompare.textContent = 'Comparaison en cours...';
+
+    try {
+      const comparison = await window.electronAPI.compareAudits(scanIdA, scanIdB);
+      renderComparisonResults(comparison);
+      showToast('Comparaison des deux audits finalisée avec succès !', 'success');
+    } catch (err: any) {
+      showToast(`Erreur lors de la comparaison : ${err?.message || err}`, 'error');
+    } finally {
+      btnCompare.removeAttribute('disabled');
+      btnCompare.innerHTML = '<span>⚖️</span> Comparer les deux audits';
+    }
+  });
+}
+
+function updateComparatorSelects(scans: ScanRecord[]): void {
+  const selectA = document.getElementById('select-audit-a') as HTMLSelectElement | null;
+  const selectB = document.getElementById('select-audit-b') as HTMLSelectElement | null;
+  if (!selectA || !selectB) return;
+
+  const currentValA = selectA.value;
+  const currentValB = selectB.value;
+
+  selectA.innerHTML = '<option value="">Sélectionnez le premier audit...</option>';
+  selectB.innerHTML = '<option value="">Sélectionnez le second audit...</option>';
+
+  scans.forEach((scan) => {
+    const dateFormatted = formatDateFr(scan.created_at);
+    const target = scan.target_email || scan.target_username || scan.target_phone || 'Sans cible';
+    const count = scan.summary_counts?.totalAccountsFound ?? 0;
+    const label = `${dateFormatted} (${target}, ${count} comptes)`;
+
+    const optA = document.createElement('option');
+    optA.value = scan.id;
+    optA.textContent = label;
+    selectA.appendChild(optA);
+
+    const optB = document.createElement('option');
+    optB.value = scan.id;
+    optB.textContent = label;
+    selectB.appendChild(optB);
+  });
+
+  if (currentValA && scans.some((s) => s.id === currentValA)) {
+    selectA.value = currentValA;
+  } else if (scans.length >= 2) {
+    selectA.value = scans[scans.length - 1].id;
+  }
+
+  if (currentValB && scans.some((s) => s.id === currentValB)) {
+    selectB.value = currentValB;
+  } else if (scans.length >= 1) {
+    selectB.value = scans[0].id;
+  }
+}
+
+function renderComparisonResults(result: AuditComparisonResult): void {
+  const resultsContainer = document.getElementById('comparator-results');
+  if (!resultsContainer) return;
+  resultsContainer.style.display = 'block';
+
+  // 1. Risk score evolution
+  const evolutionBadge = document.getElementById('comparator-score-evolution-badge');
+  const detailsEl = document.getElementById('comparator-score-details');
+
+  if (evolutionBadge) {
+    evolutionBadge.textContent = result.scoreEvolution.descriptionFrench;
+    if (result.scoreEvolution.delta < 0) {
+      evolutionBadge.className = 'badge badge-evolution-positive';
+    } else if (result.scoreEvolution.delta > 0) {
+      evolutionBadge.className = 'badge badge-evolution-negative';
+    } else {
+      evolutionBadge.className = 'badge badge-evolution-stable';
+    }
+  }
+
+  if (detailsEl) {
+    detailsEl.textContent = `(Score initial : ${result.scoreEvolution.scoreA} sur 100, Score final : ${result.scoreEvolution.scoreB} sur 100)`;
+  }
+
+  // 2. Summary stats counters
+  const statNew = document.getElementById('stat-newly-exposed');
+  const statPersistent = document.getElementById('stat-persistently-exposed');
+  const statResolved = document.getElementById('stat-resolved-accounts');
+
+  if (statNew) statNew.textContent = String(result.stats.newCount);
+  if (statPersistent) statPersistent.textContent = String(result.stats.persistentCount);
+  if (statResolved) statResolved.textContent = String(result.stats.resolvedCount);
+
+  // 3. Differential accounts table
+  const tbody = document.getElementById('comparison-tbody');
+  if (!tbody) return;
+
+  const allItems: Array<{
+    categoryLabel: string;
+    categoryClass: string;
+    statusLabel: string;
+    statusClass: string;
+    account: UnifiedAccount;
+  }> = [];
+
+  result.newlyExposed.forEach((acc) => {
+    allItems.push({
+      categoryLabel: 'Nouvelle exposition',
+      categoryClass: 'badge-risk-critical',
+      statusLabel: 'Exposé',
+      statusClass: 'badge-orange',
+      account: acc,
+    });
+  });
+
+  result.persistentlyExposed.forEach((acc) => {
+    allItems.push({
+      categoryLabel: 'Exposition persistante',
+      categoryClass: 'badge-risk-moderate',
+      statusLabel: 'Exposé',
+      statusClass: 'badge-orange',
+      account: acc,
+    });
+  });
+
+  result.resolvedAccounts.forEach((acc) => {
+    allItems.push({
+      categoryLabel: 'Compte résolu',
+      categoryClass: 'badge-risk-low',
+      statusLabel: 'Assaini',
+      statusClass: 'badge-blue',
+      account: acc,
+    });
+  });
+
+  if (allItems.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty-state">
+          Aucun compte à comparer entre ces deux audits.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = allItems
+    .map((item) => {
+      const diffInfo = getJdmDifficultyLabel(item.account.jdm?.difficulty);
+      return `
+        <tr>
+          <td><span class="badge ${item.categoryClass}">${item.categoryLabel}</span></td>
+          <td>
+            <div class="service-title" style="font-weight: 600; color: var(--text-primary);">${escapeHtml(item.account.serviceName)}</div>
+            <div class="text-secondary" style="font-size: 0.75rem;">${escapeHtml(item.account.domain)}</div>
+          </td>
+          <td><code>${escapeHtml(item.account.accountIdentifier)}</code></td>
+          <td><span class="jdm-badge ${diffInfo.cssClass}">${diffInfo.label}</span></td>
+          <td style="text-align: right;"><span class="badge ${item.statusClass}">${item.statusLabel}</span></td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
 async function loadSavedScans(): Promise<void> {
   const tbody = document.getElementById('scans-tbody');
   if (!tbody) return;
 
   try {
     const scans: ScanRecord[] = await window.electronAPI.listScans();
+    updateComparatorSelects(scans);
 
     if (scans.length === 0) {
       tbody.innerHTML = `
@@ -924,10 +1465,12 @@ async function loadSavedScans(): Promise<void> {
         <td>${formatDateFr(scan.created_at)}</td>
         <td><code>${escapeHtml(targets)}</code></td>
         <td><span class="badge badge-blue">${toolsCount} outils</span></td>
-        <td><strong style="color: #fff;">${accountsCount}</strong></td>
+        <td><strong style="color: var(--text-primary);">${accountsCount}</strong></td>
         <td style="text-align: right;">
           <div class="action-buttons">
             <button type="button" class="btn-table-action btn-reload-scan" data-id="${escapeHtml(scan.id)}">Recharger</button>
+            <button type="button" class="btn-table-action btn-export-html-scan" data-id="${escapeHtml(scan.id)}">Rapport HTML</button>
+            <button type="button" class="btn-table-action btn-export-pdf-scan" data-id="${escapeHtml(scan.id)}">Rapport PDF</button>
             <button type="button" class="btn-table-action btn-export-scan" data-id="${escapeHtml(scan.id)}">Exporter en JSON</button>
             <button type="button" class="btn-table-action btn-delete-scan" data-id="${escapeHtml(scan.id)}" style="color: #f87171;">Supprimer</button>
           </div>
@@ -942,8 +1485,50 @@ async function loadSavedScans(): Promise<void> {
           if (loaded.scan) {
             currentScanId = loaded.scan.id;
             currentAccounts = loaded.accounts;
+            currentScanLeaks = [];
+            await refreshRiskScore();
             const nav2 = document.getElementById('nav-view2');
             if (nav2) nav2.click();
+          }
+        });
+      }
+
+      // Event: Export HTML
+      const btnExportHtml = tr.querySelector('.btn-export-html-scan');
+      if (btnExportHtml) {
+        btnExportHtml.addEventListener('click', async () => {
+          showToast('Génération du rapport HTML pour cet audit...', 'info');
+          try {
+            const res = await window.electronAPI.exportHtmlReport(scan.id);
+            if (res.canceled) {
+              showToast('Exportation HTML annulée.', 'info');
+            } else if (res.success) {
+              showToast('Rapport HTML exporté avec succès !', 'success');
+            } else {
+              showToast(`Échec : ${res.error || 'Erreur inconnue'}`, 'error');
+            }
+          } catch (err: any) {
+            showToast(`Erreur : ${err?.message || err}`, 'error');
+          }
+        });
+      }
+
+      // Event: Export PDF
+      const btnExportPdf = tr.querySelector('.btn-export-pdf-scan');
+      if (btnExportPdf) {
+        btnExportPdf.addEventListener('click', async () => {
+          showToast('Impression PDF de cet audit en cours...', 'info');
+          try {
+            const res = await window.electronAPI.exportPdfReport(scan.id);
+            if (res.canceled) {
+              showToast('Exportation PDF annulée.', 'info');
+            } else if (res.success) {
+              showToast('Document PDF généré avec succès !', 'success');
+            } else {
+              showToast(`Échec : ${res.error || 'Erreur inconnue'}`, 'error');
+            }
+          } catch (err: any) {
+            showToast(`Erreur : ${err?.message || err}`, 'error');
           }
         });
       }
@@ -1023,7 +1608,7 @@ async function loadToolsHealth(force = false): Promise<void> {
       const isOk = h.installed;
 
       tr.innerHTML = `
-        <td><strong style="color: #fff;">${escapeHtml(tool)}</strong></td>
+        <td><strong style="color: var(--text-primary);">${escapeHtml(tool)}</strong></td>
         <td class="text-secondary" style="font-size: 0.85rem;">${escapeHtml(toolUsages[tool] || '')}</td>
         <td>
           <span class="status-pill ${isOk ? 'status-completed' : 'status-failed'}">
@@ -1074,6 +1659,7 @@ function escapeHtml(str?: string | null): string {
    INITIALISATION AU CHARGEMENT DU DOM
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   initNavigation();
   initView1();
   initView2();

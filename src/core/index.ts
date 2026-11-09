@@ -15,3 +15,7 @@ export * from './orchestrator.js';
 export * from './jdm-matcher.js';
 export * from './jgmd-matcher.js';
 export * from './gdpr-generator.js';
+export * from './risk-engine.js';
+export * from './report-exporter.js';
+export * from './audit-comparator.js';
+

@@ -113,6 +113,21 @@ async function runHeadlessValidation(win: BrowserWindow): Promise<void> {
     }
     console.log('[HEADLESS_TEST] Appel IPC checkHealth validé avec succès');
 
+    // 6. Test Milestone 2 Preload Bridge Methods
+    const m2BridgeOk = await win.webContents.executeJavaScript(`
+      Boolean(
+        window.electronAPI &&
+        typeof window.electronAPI.calculateRiskScore === 'function' &&
+        typeof window.electronAPI.exportHtmlReport === 'function' &&
+        typeof window.electronAPI.exportPdfReport === 'function' &&
+        typeof window.electronAPI.compareAudits === 'function'
+      )
+    `);
+    if (!m2BridgeOk) {
+      throw new Error('Methodes preload du Jalon 2 non disponibles dans le renderer');
+    }
+    console.log('[HEADLESS_TEST] Methodes preload du Jalon 2 validees avec succes');
+
     clearTimeout(timeoutId);
     console.log('[HEADLESS_TEST_SUCCESS] Toutes les vérifications ont réussi');
     app.quit();
@@ -139,7 +154,7 @@ function createWindow(): void {
     title: 'OSINT & Privacy Suite',
     width: 1280,
     height: 850,
-    minWidth: 520,
+    minWidth: 380,
     minHeight: 480,
     show: !isHeadlessTest,
     backgroundColor: '#090d16',

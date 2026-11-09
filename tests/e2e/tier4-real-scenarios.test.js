@@ -40,6 +40,10 @@ import {
   cleanTmpDir
 } from './helpers/test-env.js';
 
+import { calculateRiskScore } from '../../dist/src/core/risk-engine.js';
+import { generateStandaloneHtmlReport } from '../../dist/src/core/report-exporter.js';
+import { compareAudits } from '../../dist/src/core/audit-comparator.js';
+
 describe('Tier 4 : Scénarios Réels d\'Audit Complet de Bout en Bout', () => {
   let jdmSample;
   let jgmdSample;
@@ -413,5 +417,182 @@ describe('Tier 4 : Scénarios Réels d\'Audit Complet de Bout en Bout', () => {
     const payload = JSON.parse(jsonStr);
     assert.strictEqual(payload.accounts.length, 10);
     assert.strictEqual(payload.gdprRequests.length, 10);
+  });
+
+  // =========================================================================
+  // Scénario 6 : Calcul du Score Global de Risque et Recommandations (v2)
+  // =========================================================================
+  test('T4.6 : Scénario Réel 6 — Score Global de Risque et Recommandations sans Tiret', () => {
+    const accounts = [
+      {
+        id: 'acc-risk-1',
+        serviceId: 'steam',
+        serviceName: 'Steam',
+        domain: 'steampowered.com',
+        accountIdentifier: 'player_one',
+        sourceTool: 'maigret',
+        status: 'claimed',
+        cleaned: false,
+        metadata: {},
+        jdm: { matched: true, difficulty: 'impossible' }
+      },
+      {
+        id: 'acc-risk-2',
+        serviceId: 'spotify',
+        serviceName: 'Spotify',
+        domain: 'spotify.com',
+        accountIdentifier: 'player_one@example.com',
+        sourceTool: 'holehe',
+        status: 'claimed',
+        cleaned: false,
+        metadata: {},
+        jdm: { matched: true, difficulty: 'easy', deleteUrl: 'https://spotify.com/delete' }
+      }
+    ];
+    const leaks = [
+      {
+        id: 'leak-risk-1',
+        target: 'player_one@example.com',
+        sourceTool: 'h8mail',
+        breachName: 'ComboBreach2024',
+        dataClasses: ['passwords', 'email'],
+        details: 'Password hash exposed'
+      }
+    ];
+
+    const result = calculateRiskScore(accounts, leaks);
+    assert.ok(result.score > 0 && result.score <= 100);
+    assert.strictEqual(result.breakdown.uncleanedCount, 2);
+    assert.strictEqual(result.breakdown.criticalLeaksCount, 1);
+    assert.ok(result.recommendations.length >= 2);
+    for (const rec of result.recommendations) {
+      assert.strictEqual(/[-–—]/.test(rec.title), false, 'Titre de recommandation sans tiret');
+      assert.strictEqual(/[-–—]/.test(rec.description), false, 'Description de recommandation sans tiret');
+    }
+  });
+
+  // =========================================================================
+  // Scénario 7 : Export de Rapport d'Audit Autonome HTML avec Jauge SVG (v2)
+  // =========================================================================
+  test('T4.7 : Scénario Réel 7 — Export de Rapport HTML Autonome et Jauge SVG', () => {
+    const scanMeta = {
+      id: 'scan-export-e2e',
+      title: 'Audit Export Complet',
+      target_email: 'export@example.com',
+      created_at: '2026-11-09T10:00:00Z',
+      tools_selected: ['holehe', 'maigret', 'h8mail']
+    };
+    const accounts = [
+      {
+        id: 'acc-exp-1',
+        serviceId: 'github',
+        serviceName: 'GitHub',
+        domain: 'github.com',
+        accountIdentifier: 'export_user',
+        sourceTool: 'maigret',
+        status: 'claimed',
+        cleaned: false,
+        metadata: {},
+        jdm: { matched: true, difficulty: 'easy', deleteUrl: 'https://github.com/settings/admin' }
+      }
+    ];
+    const leaks = [
+      {
+        id: 'leak-exp-1',
+        target: 'export@example.com',
+        sourceTool: 'h8mail',
+        breachName: 'BreachArchive',
+        dataClasses: ['email'],
+        details: 'Email listed'
+      }
+    ];
+    const riskScore = calculateRiskScore(accounts, leaks);
+    const html = generateStandaloneHtmlReport(scanMeta, accounts, leaks, riskScore);
+
+    assert.ok(html.includes('<!DOCTYPE html>'));
+    assert.ok(html.includes('<svg'));
+    assert.ok(html.includes('@media print'));
+    assert.ok(html.includes('GitHub'));
+    assert.ok(html.includes('BreachArchive'));
+  });
+
+  // =========================================================================
+  // Scénario 8 : Comparateur Chronologique d'Audits et Persistance des Fuites (v2)
+  // =========================================================================
+  test('T4.8 : Scénario Réel 8 — Comparateur Chronologique entre Deux Audits Sauvegardés', () => {
+    const auditA = {
+      scan: { id: 'audit-t1', created_at: '2026-10-01T10:00:00Z' },
+      accounts: [
+        {
+          id: 'a1',
+          serviceId: 'twitter',
+          serviceName: 'Twitter',
+          domain: 'twitter.com',
+          accountIdentifier: 'user_cmp',
+          sourceTool: 'maigret',
+          status: 'claimed',
+          cleaned: false,
+          metadata: {}
+        },
+        {
+          id: 'a2',
+          serviceId: 'adobe',
+          serviceName: 'Adobe',
+          domain: 'adobe.com',
+          accountIdentifier: 'user_cmp@example.com',
+          sourceTool: 'holehe',
+          status: 'claimed',
+          cleaned: false,
+          metadata: {}
+        }
+      ],
+      leaks: []
+    };
+
+    const auditB = {
+      scan: { id: 'audit-t2', created_at: '2026-11-09T10:00:00Z' },
+      accounts: [
+        {
+          id: 'b1',
+          serviceId: 'twitter',
+          serviceName: 'Twitter',
+          domain: 'twitter.com',
+          accountIdentifier: 'user_cmp',
+          sourceTool: 'maigret',
+          status: 'claimed',
+          cleaned: true,
+          metadata: {}
+        },
+        {
+          id: 'b2',
+          serviceId: 'adobe',
+          serviceName: 'Adobe',
+          domain: 'adobe.com',
+          accountIdentifier: 'user_cmp@example.com',
+          sourceTool: 'holehe',
+          status: 'claimed',
+          cleaned: false,
+          metadata: {}
+        },
+        {
+          id: 'b3',
+          serviceId: 'github',
+          serviceName: 'GitHub',
+          domain: 'github.com',
+          accountIdentifier: 'user_cmp',
+          sourceTool: 'maigret',
+          status: 'claimed',
+          cleaned: false,
+          metadata: {}
+        }
+      ],
+      leaks: []
+    };
+
+    const diff = compareAudits(auditA, auditB);
+    assert.strictEqual(diff.stats.newCount, 1);
+    assert.strictEqual(diff.stats.persistentCount, 1);
+    assert.strictEqual(diff.stats.resolvedCount, 1);
+    assert.strictEqual(/[-–—]/.test(diff.scoreEvolution.descriptionFrench), false);
   });
 });

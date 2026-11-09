@@ -7,6 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { createRequire } from 'node:module';
 import crypto from 'node:crypto';
+import type { UnifiedLeak } from '../core/types.js';
 
 const req = createRequire(import.meta.url);
 const { DatabaseSync: NodeDatabaseSync } = req('node:sqlite');
@@ -45,6 +46,37 @@ export interface CreateScanInput {
   tools_selected?: string[];
   summaryCounts?: Record<string, any>;
   summary_counts?: Record<string, any>;
+  leaks?: (UnifiedLeak | any)[];
+}
+
+export interface DiscoveredLeakRecord {
+  id: string;
+  scan_id: string;
+  target: string;
+  source_tool: string;
+  breach_name: string;
+  breach_date?: string | null;
+  data_classes: string[];
+  details: string;
+  created_at: string;
+}
+
+export interface DiscoveredLeakInput {
+  id?: string;
+  scanId?: string;
+  scan_id?: string;
+  target?: string;
+  sourceTool?: string;
+  source_tool?: string;
+  breachName?: string;
+  breach_name?: string;
+  breachDate?: string | null;
+  breach_date?: string | null;
+  dataClasses?: string[];
+  data_classes?: string[] | string;
+  details?: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export interface DiscoveredAccountRecord {
@@ -177,6 +209,8 @@ export interface StorageEngine {
   saveAccounts(accounts: DiscoveredAccountInput[]): void;
   getAccountsByScan(scanId: string): DiscoveredAccountRecord[];
   updateAccountStatus(accountId: string, status: string, notes?: string | null): boolean;
+  saveLeaks(scanId: string, leaks: (UnifiedLeak | any)[]): void;
+  getLeaksByScan(scanId: string): UnifiedLeak[];
   saveGdprRequest(request: GdprRequestInput): string;
   getGdprRequests(scanId?: string | null): GdprRequestRecord[];
   exportScanToJson(scanId: string): string;
@@ -233,6 +267,18 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
         processed_at TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS discovered_leaks (
+        id TEXT PRIMARY KEY,
+        scan_id TEXT NOT NULL REFERENCES scans(id) ON DELETE CASCADE,
+        target TEXT NOT NULL,
+        source_tool TEXT NOT NULL,
+        breach_name TEXT NOT NULL,
+        breach_date TEXT,
+        data_classes TEXT NOT NULL,
+        details TEXT,
+        created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS gdpr_requests (
         id TEXT PRIMARY KEY,
         account_id TEXT REFERENCES discovered_accounts(id) ON DELETE SET NULL,
@@ -253,6 +299,8 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
     CREATE INDEX IF NOT EXISTS idx_accounts_scan ON discovered_accounts(scan_id);
     CREATE INDEX IF NOT EXISTS idx_accounts_status ON discovered_accounts(status);
     CREATE INDEX IF NOT EXISTS idx_accounts_difficulty ON discovered_accounts(jdm_difficulty);
+    CREATE INDEX IF NOT EXISTS idx_leaks_scan ON discovered_leaks(scan_id);
+    CREATE INDEX IF NOT EXISTS idx_leaks_target ON discovered_leaks(target);
     CREATE INDEX IF NOT EXISTS idx_gdpr_account ON gdpr_requests(account_id);
   `);
 
@@ -302,6 +350,11 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
         JSON.stringify(scan.toolsSelected ?? scan.tools_selected ?? []),
         JSON.stringify(scan.summaryCounts ?? scan.summary_counts ?? {})
       );
+
+      if (Array.isArray(scan.leaks) && scan.leaks.length > 0) {
+        engine.saveLeaks(id, scan.leaks);
+      }
+
       return id;
     },
 
@@ -466,6 +519,86 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
       return Boolean(info && info.changes > 0);
     },
 
+    saveLeaks(scanId: string, leaks: (UnifiedLeak | any)[]): void {
+      if (!Array.isArray(leaks) || leaks.length === 0) return;
+
+      withTransaction(() => {
+        const stmt = db.prepare(`
+          INSERT OR REPLACE INTO discovered_leaks (
+            id, scan_id, target, source_tool, breach_name, breach_date,
+            data_classes, details, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const now = new Date().toISOString();
+
+        for (const leak of leaks) {
+          if (!leak) continue;
+          const id = leak.id || crypto.randomUUID();
+          const target = leak.target || '';
+          const sourceTool = leak.sourceTool ?? leak.source_tool ?? 'h8mail';
+          const breachName = leak.breachName ?? leak.breach_name ?? 'Unknown Breach';
+          const breachDate = leak.breachDate ?? leak.breach_date ?? null;
+
+          let dataClasses: string[] = [];
+          if (Array.isArray(leak.dataClasses)) {
+            dataClasses = leak.dataClasses;
+          } else if (Array.isArray(leak.data_classes)) {
+            dataClasses = leak.data_classes;
+          } else if (typeof leak.data_classes === 'string') {
+            try {
+              dataClasses = JSON.parse(leak.data_classes);
+            } catch {
+              dataClasses = [leak.data_classes];
+            }
+          } else if (typeof leak.dataClasses === 'string') {
+            try {
+              dataClasses = JSON.parse(leak.dataClasses);
+            } catch {
+              dataClasses = [leak.dataClasses];
+            }
+          }
+
+          const details = leak.details ?? '';
+          const createdAt = leak.createdAt ?? leak.created_at ?? now;
+
+          stmt.run(
+            id,
+            scanId,
+            target,
+            sourceTool,
+            breachName,
+            breachDate,
+            JSON.stringify(dataClasses),
+            details,
+            createdAt
+          );
+        }
+      });
+    },
+
+    getLeaksByScan(scanId: string): UnifiedLeak[] {
+      const stmt = db.prepare('SELECT * FROM discovered_leaks WHERE scan_id = ? ORDER BY breach_date DESC, breach_name ASC');
+      const rows = stmt.all(scanId) as any[];
+      return rows.map((r) => {
+        let dataClasses: string[] = [];
+        try {
+          dataClasses = JSON.parse(r.data_classes || '[]');
+        } catch {
+          dataClasses = r.data_classes ? [r.data_classes] : [];
+        }
+        return {
+          id: r.id,
+          target: r.target,
+          sourceTool: r.source_tool as any,
+          breachName: r.breach_name,
+          breachDate: r.breach_date ?? undefined,
+          dataClasses,
+          details: r.details || ''
+        };
+      });
+    },
+
     saveGdprRequest(request: GdprRequestInput): string {
       const id = request.id || crypto.randomUUID();
       const stmt = db.prepare(`
@@ -513,6 +646,7 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
       const scan = this.getScan(scanId);
       if (!scan) throw new Error(`Scan introuvable : ${scanId}`);
       const accounts = this.getAccountsByScan(scanId);
+      const leaks = this.getLeaksByScan(scanId);
       const gdprRequests = this.getGdprRequests(scanId);
 
       const exportPayload = {
@@ -520,6 +654,7 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
         exportedAt: new Date().toISOString(),
         scan,
         accounts,
+        leaks,
         gdprRequests
       };
 
@@ -575,6 +710,10 @@ export function createStorageEngine(dbPath: string = ':memory:'): StorageEngine 
             processedAt: a.processed_at ?? a.processedAt
           }));
           this.saveAccounts(mapped);
+        }
+
+        if (Array.isArray(payload.leaks) && payload.leaks.length > 0) {
+          this.saveLeaks(payload.scan.id, payload.leaks);
         }
 
         if (Array.isArray(payload.gdprRequests)) {

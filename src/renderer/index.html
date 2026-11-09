@@ -50,6 +50,32 @@
     <!-- Conteneur principal des 4 vues -->
     <main class="main-content">
 
+      <!-- Barre de navigation superieure avec bascule de theme -->
+      <header class="top-navbar">
+        <div class="top-navbar-title-container">
+          <span class="top-navbar-app-name">Suite OSINT et Confidentialite</span>
+        </div>
+        <div class="top-navbar-actions">
+          <button id="theme-toggle" class="btn-theme-toggle" type="button" aria-label="Changer de theme" title="Changer de theme">
+            <span id="theme-toggle-icon" class="theme-icon">
+              <!-- Icone Soleil par defaut pour basculer vers le mode clair -->
+              <svg class="svg-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            </span>
+            <span id="theme-toggle-label" class="theme-label">Mode clair</span>
+          </button>
+        </div>
+      </header>
+
       <!-- ================= VUE 1 : ACCUEIL ET LANCEMENT ================= -->
       <section id="view1" class="view-panel active">
         <header class="view-header">
@@ -243,9 +269,17 @@
       <!-- ================= VUE 2 : AUDIT ET NETTOYAGE ================= -->
       <section id="view2" class="view-panel">
         <header class="view-header">
-          <div>
+          <div class="view-header-title-group">
             <h1 class="view-title">Audit et assainissement de comptes</h1>
             <p class="view-description">Consultez la liste des profils découverts, leurs liens de suppression et exercez vos droits RGPD.</p>
+          </div>
+          <div class="actions-group">
+            <button type="button" id="btn-export-html-view2" class="btn btn-secondary btn-small" title="Exporter l audit actuel en page web autonome">
+              <span>📄</span> Exporter en HTML
+            </button>
+            <button type="button" id="btn-export-pdf-view2" class="btn btn-secondary btn-small" title="Exporter l audit actuel en document PDF imprimable">
+              <span>📑</span> Exporter en PDF
+            </button>
           </div>
         </header>
 
@@ -266,6 +300,89 @@
           <div class="stat-card">
             <span class="stat-label">Taux d'assainissement</span>
             <span id="stat-sanitization-rate" class="stat-value text-purple">0%</span>
+          </div>
+        </div>
+
+        <!-- ================= COMPOSANT R2 : SCORE GLOBAL DE RISQUE & RECOMMANDATIONS ================= -->
+        <div id="risk-score-container" class="card risk-card">
+          <div class="risk-card-grid">
+
+            <!-- Colonne gauche : Jauge radiale SVG et métriques de décomposition -->
+            <div class="risk-gauge-column">
+              <div class="card-header-compact">
+                <h2 class="card-title">Score global de risque vie privée</h2>
+                <p class="view-description">Évaluation pondérée des comptes non assainis et de la gravité des fuites</p>
+              </div>
+
+              <div class="gauge-presentation-box">
+                <div class="gauge-svg-wrapper">
+                  <svg id="risk-gauge-svg" class="risk-gauge-svg" viewBox="0 0 200 200" width="180" height="180" role="img" aria-label="Jauge de risque global de 0 à 100">
+                    <!-- Piste de fond circulaire -->
+                    <circle class="gauge-track" cx="100" cy="100" r="70" fill="none" stroke-width="14" />
+                    <!-- Arc dynamique de progression -->
+                    <circle
+                      id="gauge-progress-circle"
+                      class="gauge-progress-arc"
+                      cx="100"
+                      cy="100"
+                      r="70"
+                      fill="none"
+                      stroke-width="14"
+                      stroke-linecap="round"
+                      stroke-dasharray="439.82"
+                      stroke-dashoffset="439.82"
+                      transform="rotate(-90 100 100)"
+                    />
+                    <!-- Valeur numérique centrale -->
+                    <text id="gauge-score-value" x="100" y="92" text-anchor="middle" class="gauge-score-text">0</text>
+                    <text x="100" y="115" text-anchor="middle" class="gauge-subtext">sur 100</text>
+                    <!-- Libellé textuel du niveau de risque -->
+                    <text id="gauge-level-text" x="100" y="136" text-anchor="middle" class="gauge-level-text">FAIBLE</text>
+                  </svg>
+                </div>
+
+                <div class="gauge-meta-summary">
+                  <div class="meta-level-row">
+                    <span class="meta-label">Niveau d exposition :</span>
+                    <span id="risk-level-badge" class="badge badge-risk-low badge-risk-faible">Risque faible</span>
+                  </div>
+
+                  <div class="risk-breakdown-subgrid">
+                    <div class="breakdown-box">
+                      <span class="breakdown-title">Comptes non assainis</span>
+                      <span id="risk-uncleaned-count" class="breakdown-number">0</span>
+                    </div>
+                    <div class="breakdown-box">
+                      <span class="breakdown-title">Points comptes</span>
+                      <span id="risk-accounts-score" class="breakdown-number">0 / 60</span>
+                    </div>
+                    <div class="breakdown-box">
+                      <span class="breakdown-title">Fuites critiques</span>
+                      <span id="risk-critical-leaks" class="breakdown-number">0</span>
+                    </div>
+                    <div class="breakdown-box">
+                      <span class="breakdown-title">Points fuites</span>
+                      <span id="risk-leaks-score" class="breakdown-number">0 / 100</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colonne droite : Liste priorisée des recommandations d'assainissement -->
+            <div class="risk-recommendations-column">
+              <div class="card-header-compact section-header-flex">
+                <h3 class="subsection-title">Recommandations prioritaires d assainissement</h3>
+                <span id="recommendations-count-badge" class="badge badge-blue">0 recommandation</span>
+              </div>
+
+              <div id="risk-recommendations-list" class="recommendations-container">
+                <div class="empty-recommendations-state">
+                  <p class="text-secondary">Aucune recommandation active. Vos comptes identifiés sont assainis ou aucune fuite n a été détectée.</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -464,6 +581,90 @@
           </div>
         </div>
 
+        <!-- ================= COMPOSANT R4 : COMPARATEUR D AUDITS CHRONOLOGIQUE ================= -->
+        <div class="card comparator-card" id="audit-comparator-panel">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-title">Comparateur d audits chronologique</h2>
+              <p class="view-description" style="margin-top: 0.25rem;">Comparez deux analyses temporelles pour mesurer l évolution des expositions et l efficacité des suppressions.</p>
+            </div>
+          </div>
+
+          <div class="comparator-controls-grid">
+            <div class="form-group">
+              <label for="select-audit-a" class="form-label">Audit de référence (antérieur)</label>
+              <select id="select-audit-a" class="form-select">
+                <option value="">Sélectionnez le premier audit...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="select-audit-b" class="form-label">Audit de comparaison (récent)</label>
+              <select id="select-audit-b" class="form-select">
+                <option value="">Sélectionnez le second audit...</option>
+              </select>
+            </div>
+
+            <div class="form-group comparator-btn-group">
+              <button type="button" id="btn-compare-audits" class="btn btn-primary">
+                <span>⚖️</span> Comparer les deux audits
+              </button>
+            </div>
+          </div>
+
+          <!-- Zone de résultats (masquée par défaut, révélée après exécution de compareAudits) -->
+          <div id="comparator-results" class="comparator-results-container" style="display: none;">
+            <!-- Évolution globale du score de risque -->
+            <div class="comparator-evolution-banner">
+              <div class="evolution-metric-block">
+                <span class="evolution-label">Évolution globale du risque :</span>
+                <span id="comparator-score-evolution-badge" class="badge badge-evolution-stable">Score stable</span>
+                <span id="comparator-score-details" class="text-secondary">(Score initial : 0 sur 100, Score final : 0 sur 100)</span>
+              </div>
+            </div>
+
+            <!-- Grille des 3 cartes synthétiques -->
+            <div class="stats-grid comparator-stats-grid">
+              <div class="stat-card card-newly-exposed">
+                <span class="stat-label">Comptes nouvellement apparus</span>
+                <span id="stat-newly-exposed" class="stat-value text-red">0</span>
+                <span class="stat-subtext">Nouvelles expositions identifiées</span>
+              </div>
+              <div class="stat-card card-persistently-exposed">
+                <span class="stat-label">Comptes persistants non assainis</span>
+                <span id="stat-persistently-exposed" class="stat-value text-amber">0</span>
+                <span class="stat-subtext">Toujours exposés entre les deux audits</span>
+              </div>
+              <div class="stat-card card-resolved-accounts">
+                <span class="stat-label">Comptes résolus ou supprimés</span>
+                <span id="stat-resolved-accounts" class="stat-value text-emerald">0</span>
+                <span class="stat-subtext">Suppression effectuée avec succès</span>
+              </div>
+            </div>
+
+            <!-- Tableau détaillé différentiel -->
+            <div class="comparator-table-wrapper" style="margin-top: 1.5rem;">
+              <h3 class="subsection-title">Détail des comptes comparés</h3>
+              <div class="table-responsive">
+                <table class="data-table" id="table-comparison">
+                  <thead>
+                    <tr>
+                      <th>Catégorie</th>
+                      <th>Service ou Plateforme</th>
+                      <th>Identifiant</th>
+                      <th>Difficulté JustDeleteMe</th>
+                      <th style="text-align: right;">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody id="comparison-tbody">
+                    <!-- Rempli dynamiquement -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Diagnostic de santé des 6 outils -->
         <div class="card">
           <div class="card-header-flex">
@@ -569,6 +770,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Conteneur global des notifications Toast temporaires -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script type="module" src="app.js"></script>
 </body>

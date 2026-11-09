@@ -10,6 +10,8 @@ import type {
   OrchestratorResult,
   OrchestratorProgressEvent,
   ToolHealth,
+  UnifiedAccount,
+  UnifiedLeak,
 } from '../core/types.js';
 import type {
   DiscoveredAccountRecord,
@@ -18,6 +20,11 @@ import type {
   GdprRequestInput,
 } from '../storage/database.js';
 import type { GdprRequestParams, GdprEmailResult } from '../core/gdpr-generator.js';
+import type { RiskScoreResult, RiskEngineOptions } from '../core/risk-engine.js';
+import type { AuditComparisonResult } from '../core/audit-comparator.js';
+import type { ExportReportResult } from '../main/ipc-handlers.js';
+
+export type { ExportReportResult };
 
 export interface ElectronAPI {
   startScan: (params: { targets: OrchestratorTargets; selectedTools?: SupportedTool[] }) => Promise<OrchestratorResult>;
@@ -37,6 +44,22 @@ export interface ElectronAPI {
   writeClipboard: (text: string) => Promise<void>;
   onToolProgress: (callback: (event: OrchestratorProgressEvent) => void) => () => void;
   removeAllListeners: (channel: string) => void;
+
+  // Milestone 2 IPC bridge methods
+  calculateRiskScore: (
+    accounts?: (UnifiedAccount | DiscoveredAccountRecord)[],
+    leaks?: UnifiedLeak[],
+    options?: RiskEngineOptions
+  ) => Promise<RiskScoreResult>;
+  exportHtmlReport: (scanId: string, customPath?: string) => Promise<ExportReportResult>;
+  exportPdfReport: (scanId: string, customPath?: string) => Promise<ExportReportResult>;
+  compareAudits: (scanIdA: string, scanIdB: string) => Promise<AuditComparisonResult>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
 }
 
 const api: ElectronAPI = {
@@ -56,6 +79,16 @@ const api: ElectronAPI = {
   checkHealth: () => ipcRenderer.invoke('tools:checkHealth'),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   writeClipboard: (text) => ipcRenderer.invoke('clipboard:writeText', text),
+
+  // Milestone 2 IPC bridge methods
+  calculateRiskScore: (accounts, leaks, options) =>
+    ipcRenderer.invoke('risk:calculate', accounts, leaks, options),
+  exportHtmlReport: (scanId, customPath) =>
+    ipcRenderer.invoke('report:exportHtml', scanId, customPath),
+  exportPdfReport: (scanId, customPath) =>
+    ipcRenderer.invoke('report:exportPdf', scanId, customPath),
+  compareAudits: (scanIdA, scanIdB) =>
+    ipcRenderer.invoke('scan:compare', scanIdA, scanIdB),
 
   onToolProgress: (callback) => {
     const handler = (_event: IpcRendererEvent, data: OrchestratorProgressEvent) => callback(data);
